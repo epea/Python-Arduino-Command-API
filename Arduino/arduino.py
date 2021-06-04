@@ -24,7 +24,7 @@ def enumerate_serial_ports():
         key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, path)
     except WindowsError:
         raise Exception
-  
+
     for i in itertools.count():
         try:
             val = winreg.EnumValue(key, i)
@@ -48,7 +48,7 @@ def build_cmd_str(cmd, args=None):
         args = '%'.join(map(str, args))
     else:
         args = ''
-    return "@{cmd}%{args}$!".format(cmd=cmd, args=args)
+    return "@{cmd}%{args}$!".format(cmd=cmd, args=args).encode()
 
 
 def find_port(baud, timeout):
@@ -89,7 +89,7 @@ def get_version(sr):
         sr.flush()
     except Exception:
         return None
-    return sr.readline().replace("\r\n", "")
+    return sr.readline().decode().replace("\r\n", "")
 
 
 class Arduino(object):
@@ -385,7 +385,7 @@ class Arduino(object):
             value (int): an integer from 0 and 255
         """
         cmd_str = build_cmd_str("so",
-                               (dataPin, clockPin, pinOrder, value))
+                                (dataPin, clockPin, pinOrder, value))
         self.sr.write(cmd_str)
         self.sr.flush()
 
@@ -573,7 +573,7 @@ class EEPROM(object):
         Returns size of EEPROM memory.
         """
         cmd_str = build_cmd_str("sz")
-   
+
         try:
             self.sr.write(cmd_str)
             self.sr.flush()
@@ -581,14 +581,14 @@ class EEPROM(object):
             return int(response)
         except:
             return 0
-        
+
     def write(self, address, value=0):
         """ Write a byte to the EEPROM.
-            
+
         :address: the location to write to, starting from 0 (int)
         :value: the value to write, from 0 to 255 (byte)
         """
-        
+
         if value > 255:
             value = 255
         elif value < 0:
@@ -599,19 +599,18 @@ class EEPROM(object):
             self.sr.flush()
         except:
             pass
-    
+
     def read(self, adrress):
         """ Reads a byte from the EEPROM.
-        
+
         :address: the location to write to, starting from 0 (int)
         """
         cmd_str = build_cmd_str("eer", (adrress,))
         try:
             self.sr.write(cmd_str)
-            self.sr.flush()            
+            self.sr.flush()
             response = self.sr.readline().replace("\r\n", "")
             if response:
                 return int(response)
         except:
             return 0
-                                
